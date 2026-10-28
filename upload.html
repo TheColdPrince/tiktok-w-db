@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Upload</title>
+  <style>
+    *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    body{margin:0;min-height:100vh;background:#000;color:#fff;padding:20px}
+    .wrap{max-width:520px;margin:0 auto}.card{background:#111;border:1px solid #222;border-radius:18px;padding:22px;margin-top:20px}
+    h1{margin:0 0 12px;font-size:28px}.muted{color:#aaa;margin-bottom:16px}.field{margin-bottom:14px}
+    label{display:block;font-size:13px;margin-bottom:6px;color:#ccc} input,textarea{width:100%;padding:14px;border-radius:12px;border:1px solid #333;background:#1a1a1a;color:#fff}
+    textarea{min-height:110px;resize:vertical} button,.btn{padding:14px 16px;border:none;border-radius:12px;background:#fe2c55;color:#fff;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center}
+    .row{display:flex;gap:12px;flex-wrap:wrap}.btn.secondary{background:#222}.msg{margin-top:14px;font-size:14px}.ok{color:#79ffb3}.err{color:#ff8f8f}
+    .gate{display:none}.gate.show{display:block}.formBox{display:none}.formBox.show{display:block}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card gate" id="guestGate">
+    <h1>Upload</h1>
+    <div class="muted">You need to log in first.</div>
+    <div class="row"><a class="btn" href="login.html">Login</a><a class="btn secondary" href="register.html">Register</a><a class="btn secondary" href="index.html">Home</a></div>
+  </div>
+
+  <div class="card formBox" id="uploadBox">
+    <h1>Upload video</h1>
+    <div class="muted">This page reads the real current account from localStorage.</div>
+    <div id="who"></div>
+    <div class="field"><label>Title</label><input id="title" placeholder="My video"></div>
+    <div class="field"><label>Description</label><textarea id="description" placeholder="Say something..."></textarea></div>
+    <div class="field"><label>Hashtags</label><input id="hashtags" placeholder="#fun #video"></div>
+    <div class="field"><label>Music name</label><input id="music" placeholder="Original Sound"></div>
+    <div class="field"><label>Video file</label><input id="videoFile" type="file" accept="video/*"></div>
+    <div class="field"><label>Poster image (optional)</label><input id="posterFile" type="file" accept="image/*"></div>
+    <div class="row"><button id="uploadBtn">Upload</button><a class="btn secondary" href="index.html">Back</a></div>
+    <div id="msg" class="msg"></div>
+  </div>
+</div>
+<script>
+const SESSION_KEY='tt_current_user';
+function generateId(prefix='id'){ return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,10); }
+function normalizeEmail(v){ return String(v || '').trim().toLowerCase(); }
+function getSession(){ try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch(e){ return null; } }
+async function resolveCurrentUser(){
+  const session=getSession();
+  if(!session) return null;
+  const users=await WebDB.select('users') || [];
+  return users.find(u => String(u.id || '')===String(session.id || '')) || users.find(u => normalizeEmail(u.email)===normalizeEmail(session.email)) || session;
+}
+async function showState(){
+  const user=await resolveCurrentUser();
+  document.getElementById('guestGate').classList.toggle('show', !user);
+  document.getElementById('uploadBox').classList.toggle('show', !!user);
+  if(user){
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ id:user.id, username:user.username, email:user.email, avatar_path:user.avatar_path || '' }));
+    document.getElementById('who').innerHTML=`<div class="muted">Logged in as <b>${user.username}</b> (${user.email || ''})</div>`;
+  }
+}
+async function uploadVideo(){
+  const user=await resolveCurrentUser();
+  const msg=document.getElementById('msg');
+  msg.className='msg'; msg.textContent='';
+  if(!user){ await showState(); msg.classList.add('err'); msg.textContent='Please log in first.'; return; }
+  const title=document.getElementById('title').value.trim();
+  const description=document.getElementById('description').value.trim();
+  const hashtags=document.getElementById('hashtags').value.trim();
+  const music=document.getElementById('music').value.trim() || 'Original Sound';
+  const videoInput=document.getElementById('videoFile');
+  const posterInput=document.getElementById('posterFile');
+  if(videoInput.files.length===0){ msg.classList.add('err'); msg.textContent='Select a video file.'; return; }
+  const btn=document.getElementById('uploadBtn'); btn.disabled=true; btn.textContent='Uploading...';
+  const videoPath=await WebDB.uploadFile(videoInput);
+  let posterPath='';
+  if(posterInput.files.length){ posterPath=await WebDB.uploadFile(posterInput); }
+  if(!videoPath){ msg.classList.add('err'); msg.textContent='Upload failed. Make sure project is Public if required.'; btn.disabled=false; btn.textContent='Upload'; return; }
+  await WebDB.insert('videos',{ id:generateId('video'), user_id:user.id, title, description, video_path:videoPath, poster_path:posterPath, hashtags, music_name:music, updated_at:new Date().toISOString() });
+  msg.classList.add('ok'); msg.textContent='Video uploaded successfully.';
+  btn.disabled=false; btn.textContent='Upload';
+  setTimeout(()=>location.href='index.html',700);
+}
+showState();
+document.getElementById('uploadBtn').addEventListener('click', uploadVideo);
+</script>
+</body>
+</html>

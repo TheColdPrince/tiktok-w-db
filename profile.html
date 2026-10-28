@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Profile</title>
+  <style>
+    *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    body{margin:0;min-height:100vh;background:#000;color:#fff;padding:20px}
+    .wrap{max-width:560px;margin:0 auto}.card{background:#111;border:1px solid #222;border-radius:18px;padding:22px;margin-top:20px}
+    .gate,.profileBox{display:none}.gate.show,.profileBox.show{display:block}.avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;border:2px solid #333}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.btn{padding:14px 16px;border:none;border-radius:12px;background:#fe2c55;color:#fff;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;justify-content:center}
+    .btn.secondary{background:#222} .muted{color:#aaa} .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px} .tile{background:#1a1a1a;border-radius:12px;overflow:hidden;aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;color:#888} .tile video,.tile img{width:100%;height:100%;object-fit:cover}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card gate" id="guestGate">
+    <h1>Profile</h1>
+    <div class="muted" style="margin-bottom:16px">You are not logged in.</div>
+    <div class="row"><a class="btn" href="login.html">Login</a><a class="btn secondary" href="register.html">Register</a><a class="btn secondary" href="index.html">Home</a></div>
+  </div>
+
+  <div class="card profileBox" id="profileBox">
+    <div class="row">
+      <img id="avatar" class="avatar" alt="avatar">
+      <div>
+        <h1 id="username" style="margin:0 0 6px"></h1>
+        <div id="email" class="muted"></div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <a class="btn" href="upload.html">Upload video</a>
+      <button class="btn secondary" id="logoutBtn">Logout</button>
+      <a class="btn secondary" href="index.html">Home</a>
+    </div>
+    <div class="muted" style="margin-top:18px">My videos</div>
+    <div class="grid" id="myVideos"></div>
+  </div>
+</div>
+<script>
+const SESSION_KEY='tt_current_user';
+const DEFAULT_AVATAR='https://randomuser.me/api/portraits/men/11.jpg';
+function normalizeEmail(v){ return String(v || '').trim().toLowerCase(); }
+function getSession(){ try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch(e){ return null; } }
+async function resolveCurrentUser(){
+  const session=getSession();
+  if(!session) return null;
+  const users=await WebDB.select('users') || [];
+  return users.find(u => String(u.id || '')===String(session.id || '')) || users.find(u => normalizeEmail(u.email)===normalizeEmail(session.email)) || null;
+}
+async function showProfile(){
+  const user=await resolveCurrentUser();
+  const guest=document.getElementById('guestGate');
+  const profile=document.getElementById('profileBox');
+  guest.classList.toggle('show', !user);
+  profile.classList.toggle('show', !!user);
+  if(!user) return;
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ id:user.id, username:user.username, email:user.email, avatar_path:user.avatar_path || DEFAULT_AVATAR }));
+  const videos=await WebDB.select('videos') || [];
+  document.getElementById('avatar').src=user.avatar_path || DEFAULT_AVATAR;
+  document.getElementById('username').textContent='@' + (user.username || 'user');
+  document.getElementById('email').textContent=user.email || '';
+  const mine=videos.filter(v => String(v.user_id || '')===String(user.id || '')).sort((a,b)=>new Date(b.updated_at||0)-new Date(a.updated_at||0));
+  document.getElementById('myVideos').innerHTML = mine.length ? mine.map(v => `<a class="tile" href="index.html"><video muted playsinline src="${v.video_path}"></video></a>`).join('') : '<div class="tile">No videos</div>';
+}
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+  const session=getSession();
+  localStorage.removeItem(SESSION_KEY);
+  const sessions=await WebDB.select('sessions') || [];
+  const kept=sessions.filter(s => !(String(s.user_id || '')===String(session?.id || '')));
+  await WebDB._setRaw('sessions', { columns:['id','user_id','session_token','is_active','updated_at'], rows: kept });
+  location.reload();
+});
+showProfile();
+</script>
+</body>
+</html>

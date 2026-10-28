@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TikTok Clone</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #000; color: #fff; overflow: hidden; height: 100vh; width: 100vw; }
+        a { color: inherit; text-decoration: none; }
+        .app-container { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; background: #000; }
+        .video-wrapper { position: relative; width: 100%; max-width: 480px; height: 100%; background: #000; overflow: hidden; }
+        .video-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94); z-index: 1; display: block; }
+        .video-slide.active { transform: translateY(0); z-index: 2; }
+        .video-slide.prev { transform: translateY(-100%); z-index: 1; }
+        video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+        .top-nav { position: absolute; top: 20px; width: 100%; z-index: 10; display: flex; justify-content: center; gap: 20px; font-size: 16px; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .top-nav a, .top-nav span { opacity: 0.6; cursor: pointer; }
+        .top-nav .active { opacity: 1; border-bottom: 2px solid #fff; padding-bottom: 3px; }
+        .sidebar-right { position: absolute; right: 10px; bottom: 100px; z-index: 10; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .action-btn { display: flex; flex-direction: column; align-items: center; cursor: pointer; background: none; border: none; color: inherit; }
+        .avatar-container { position: relative; margin-bottom: 15px; }
+        .avatar-img { width: 48px; height: 48px; border-radius: 50%; border: 1px solid #fff; object-fit: cover; }
+        .add-icon { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #fe2c55; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; }
+        .action-icon { font-size: 32px; color: #fff; filter: drop-shadow(0px 0px 5px rgba(0,0,0,0.4)); margin-bottom: 5px; transition: transform 0.1s; }
+        .action-icon.liked { color: #fe2c55; }
+        .action-text { font-size: 12px; font-weight: 600; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .disc-area { margin-top: 10px; position: relative; width: 48px; height: 48px; }
+        .disc-bg { width: 100%; height: 100%; background: #222; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: spin 5s linear infinite; border: 8px solid #111; }
+        .disc-bg img { width: 25px; height: 25px; border-radius: 50%; object-fit: cover; }
+        .music-note { position: absolute; top: 0; right: 0; font-size: 15px; opacity: 0; animation: float-notes 2s infinite linear; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        @keyframes float-notes { 0% { opacity: 0; transform: translate(0, 0) rotate(0deg); } 50% { opacity: 1; } 100% { opacity: 0; transform: translate(-20px, -40px) rotate(-30deg); } }
+        .bottom-info { position: absolute; bottom: 20px; left: 0; width: 80%; padding: 15px; z-index: 10; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent); }
+        .username { font-weight: 700; font-size: 17px; margin-bottom: 8px; cursor: pointer; }
+        .description { font-size: 15px; margin-bottom: 10px; line-height: 1.3; }
+        .hashtags { font-weight: 700; }
+        .music-ticker { display: flex; align-items: center; font-size: 14px; margin-top: 10px; }
+        .music-ticker i { margin-right: 10px; }
+        .ticker-text { overflow: hidden; white-space: nowrap; width: 150px; }
+        .play-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; opacity: 0.6; display: none; z-index: 5; pointer-events: none; }
+        .comments-drawer { position: absolute; bottom: 0; left: 0; width: 100%; height: 70%; background: #fff; color: #000; border-radius: 12px 12px 0 0; z-index: 20; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.1, 0.7, 0.1, 1); display: flex; flex-direction: column; }
+        .comments-drawer.open { transform: translateY(0); }
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #eee; }
+        .drawer-title { font-weight: 700; font-size: 14px; }
+        .close-btn { font-size: 20px; cursor: pointer; padding: 5px; }
+        .comments-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .comment-item { display: flex; margin-bottom: 20px; align-items: flex-start; }
+        .comment-avatar { width: 32px; height: 32px; border-radius: 50%; background: #ccc; margin-right: 12px; flex-shrink: 0; overflow: hidden; }
+        .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .comment-content { flex: 1; }
+        .comment-user { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 2px; }
+        .comment-text { font-size: 14px; line-height: 1.4; color: #111; word-break: break-word; }
+        .comment-meta { font-size: 12px; color: #888; margin-top: 4px; display: flex; gap: 15px; }
+        .comment-like-container { display: flex; flex-direction: column; align-items: center; justify-content: center; margin-left: 10px; }
+        .comment-like-icon { font-size: 16px; color: #ccc; margin-bottom: 2px; }
+        .comment-like-count { font-size: 10px; color: #888; }
+        .comment-input-area { padding: 10px 15px; border-top: 1px solid #eee; display: flex; align-items: center; gap: 10px; }
+        .comment-input { flex: 1; background: #f1f1f1; border: none; padding: 10px 12px; border-radius: 20px; outline: none; }
+        .post-btn { color: #fe2c55; font-weight: 600; font-size: 14px; border: none; background: none; cursor: pointer; }
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; height: 50px; background: #000; display: flex; justify-content: space-around; align-items: center; z-index: 10; border-top: 1px solid #222; }
+        .nav-link { color: #fff; opacity: 0.5; display: flex; flex-direction: column; align-items: center; font-size: 10px; cursor: pointer; }
+        .nav-link.active { opacity: 1; }
+        .nav-link i { font-size: 20px; margin-bottom: 3px; }
+        .add-btn-main { width: 45px; height: 30px; background: #fff; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .add-btn-main::before, .add-btn-main::after { content: ''; position: absolute; width: 4px; height: 100%; border-radius: 8px; z-index: -1; }
+        .add-btn-main::before { left: -3px; background: #20d5ec; }
+        .add-btn-main::after { right: -3px; background: #fe2c55; }
+        .add-btn-main i { color: #000; font-size: 16px; margin: 0; }
+        .empty-comments { text-align: center; color: #666; padding: 30px 10px; font-size: 14px; }
+        .splash-screen { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 999; transition: opacity 0.4s ease, visibility 0.4s ease; }
+        .splash-screen.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+        .splash-content { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
+        .splash-logo { width: 86px; height: 86px; border-radius: 24px; object-fit: cover; box-shadow: 0 0 30px rgba(255,255,255,0.12); background:#111; display:flex; }
+        .splash-name { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    </style>
+</head>
+<body>
+    <div class="splash-screen" id="splashScreen">
+        <div class="splash-content">
+            <img class="splash-logo" src="assets/asset_aa84e8da69bf_tiktok.gif" alt="Logo" onerror="this.style.display='none'">
+            <div class="splash-name">TikTok Clone</div>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <div class="video-wrapper">
+            <div class="top-nav">
+                <a href="#">Following</a>
+                <span class="active">For You</span>
+            </div>
+
+            <div id="slidesContainer"></div>
+
+            <div class="bottom-nav">
+                <a href="index.html" class="nav-link active"><i class="fas fa-home"></i><span>Home</span></a>
+                <a href="#" class="nav-link"><i class="fas fa-user-friends"></i><span>Friends</span></a>
+                <a href="upload.html" class="nav-link"><div class="add-btn-main"><i class="fas fa-plus"></i></div></a>
+                <a href="#" class="nav-link"><i class="fas fa-inbox"></i><span>Inbox</span></a>
+                <a href="profile.html" class="nav-link"><i class="fas fa-user"></i><span>Profile</span></a>
+            </div>
+
+            <div class="comments-drawer" id="commentsDrawer">
+                <div class="drawer-header">
+                    <div class="drawer-title" id="drawerTitle">0 comments</div>
+                    <div class="close-btn" id="closeCommentsBtn"><i class="fas fa-times"></i></div>
+                </div>
+                <div class="comments-list" id="commentsList"></div>
+                <div class="comment-input-area">
+                    <input type="text" class="comment-input" id="commentInput" placeholder="Add comment...">
+                    <button class="post-btn" id="postCommentBtn">Post</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+const DB = {
+  async select(name){ try { return await WebDB.select(name) || []; } catch(e){ console.error(e); return []; } },
+  async insert(name,row){ return await WebDB.insert(name,row); },
+  async setRaw(name,columns,rows){ return await WebDB._setRaw(name,{columns,rows}); }
+};
+const SESSION_KEY = 'tt_current_user';
+const DEFAULT_AVATAR = 'https://randomuser.me/api/portraits/men/11.jpg';
+const DEFAULT_POSTER = 'https://via.placeholder.com/480x850/000000/FFFFFF?text=Loading...';
+let appData = { app:{ splash:{ logo:'assets/asset_aa84e8da69bf_tiktok.gif', name:'TikTok Clone' }, currentUser:{ username:'Guest', avatar:DEFAULT_AVATAR } }, videos:[] };
+let currentSlide = 0, isScrolling = false, startY = 0, slides = [], hydratedVideos = [];
+const slidesContainer = document.getElementById('slidesContainer');
+const commentsDrawer = document.getElementById('commentsDrawer');
+const commentsList = document.getElementById('commentsList');
+const drawerTitle = document.getElementById('drawerTitle');
+const commentInput = document.getElementById('commentInput');
+const postCommentBtn = document.getElementById('postCommentBtn');
+const closeCommentsBtn = document.getElementById('closeCommentsBtn');
+const splashScreen = document.getElementById('splashScreen');
+
+function getSession(){ try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch(e){ return null; } }
+function setSession(user){ localStorage.setItem(SESSION_KEY, JSON.stringify(user)); }
+function generateId(prefix='id'){ return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,10); }
+function normalizeEmail(v){ return String(v || '').trim().toLowerCase(); }
+function resolveUser(users, session){
+  if(!session) return null;
+  return users.find(u => String(u.id || '') === String(session.id || ''))
+    || users.find(u => normalizeEmail(u.email) === normalizeEmail(session.email))
+    || null;
+}
+function formatCompact(n){ const num = Number(n || 0); if(num >= 1000000) return (num/1000000).toFixed(1).replace(/\.0$/,'') + 'M'; if(num >= 1000) return (num/1000).toFixed(1).replace(/\.0$/,'') + 'K'; return String(num); }
+function formatCommentCount(count){ return `${count.toLocaleString()} comments`; }
+function escapeHtml(str){ return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+async function syncCurrentUser(){
+  const session = getSession();
+  if(!session) return;
+  const users = await DB.select('users');
+  const user = resolveUser(users, session);
+  if(user){
+    const safeId = user.id || session.id || generateId('user');
+    setSession({ id:safeId, username:user.username, email:user.email, avatar_path:user.avatar_path || DEFAULT_AVATAR });
+    appData.app.currentUser = { username:user.username, avatar:user.avatar_path || DEFAULT_AVATAR };
+  }
+}
+
+async function loadFeedData(){
+  const users = await DB.select('users');
+  const videos = (await DB.select('videos')).map(v => ({ ...v, id: v.id || generateId('video') }));
+  const comments = (await DB.select('comments')).map(c => ({ ...c, id: c.id || generateId('comment') }));
+  const likes = (await DB.select('likes')).map(l => ({ ...l, id: l.id || generateId('like') }));
+  const session = getSession();
+
+  hydratedVideos = videos.slice().sort((a,b) => new Date(b.updated_at||0) - new Date(a.updated_at||0)).map(video => {
+    const owner = users.find(u => String(u.id) === String(video.user_id)) || {};
+    const videoComments = comments.filter(c => String(c.video_id) === String(video.id)).sort((a,b) => new Date(b.updated_at||0) - new Date(a.updated_at||0)).map(c => {
+      const cu = users.find(u => String(u.id) === String(c.user_id)) || {};
+      return { id:c.id, user:cu.username || 'user', text:c.comment_text || '', avatar:cu.avatar_path || DEFAULT_AVATAR, likes:0, time:c.updated_at ? new Date(c.updated_at).toLocaleDateString() : 'now' };
+    });
+    const likeCount = likes.filter(l => String(l.video_id) === String(video.id)).length;
+    const activeUser = resolveUser(users, session) || session;
+    const liked = !!(activeUser && likes.find(l => String(l.video_id) === String(video.id) && (String(l.user_id) === String(activeUser.id) || normalizeEmail(l.user_email) === normalizeEmail(activeUser.email))));
+    return {
+      id: video.id,
+      video: video.video_path,
+      poster: video.poster_path || DEFAULT_POSTER,
+      user: { username: owner.username || 'creator', avatar: owner.avatar_path || DEFAULT_AVATAR },
+      description: video.description || video.title || 'Untitled video',
+      hashtags: (video.hashtags || '').split(/\s+/).filter(Boolean),
+      music: video.music_name || 'Original Sound',
+      likes: formatCompact(likeCount),
+      liked,
+      shares: 'Share',
+      profileLink: 'profile.html?user=' + encodeURIComponent(video.user_id || ''),
+      comments: videoComments
+    };
+  });
+
+  if(hydratedVideos.length === 0){
+    hydratedVideos = [{
+      id: 0,
+      video: '',
+      poster: DEFAULT_POSTER,
+      user: { username: 'welcome', avatar: DEFAULT_AVATAR },
+      description: 'No videos yet. Upload the first one from Upload page.',
+      hashtags: ['#welcome'],
+      music: 'Original Sound',
+      likes: '0',
+      liked: false,
+      shares: 'Share',
+      profileLink: 'profile.html',
+      comments: []
+    }];
+  }
+  appData.videos = hydratedVideos;
+}
+
+function renderSlides(){
+  slidesContainer.innerHTML = appData.videos.map((item, index) => {
+    const hashtags = item.hashtags.join(' ');
+    const commentsCount = item.comments.length.toLocaleString();
+    const media = item.video ? `<video loop muted playsinline poster="${item.poster || ''}"><source src="${item.video}" type="video/mp4"></video>` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#111;color:#fff;padding:30px;text-align:center;">No video yet</div>`;
+    return `
+      <div class="video-slide" data-index="${index}">
+        ${media}
+        <div class="play-overlay"><i class="fas fa-play"></i></div>
+        <div class="sidebar-right">
+          <div class="avatar-container">
+            <a href="${item.profileLink || 'profile.html'}"><img src="${item.user.avatar}" class="avatar-img" alt="${escapeHtml(item.user.username)}"></a>
+            <div class="add-icon"><i class="fas fa-plus"></i></div>
+          </div>
+          <button class="action-btn" data-action="like" data-index="${index}">
+            <i class="fas fa-heart action-icon ${item.liked ? 'liked' : ''}"></i>
+            <span class="action-text">${item.likes}</span>
+          </button>
+          <button class="action-btn" data-action="comment" data-index="${index}">
+            <i class="fas fa-comment-dots action-icon"></i>
+            <span class="action-text">${commentsCount}</span>
+          </button>
+          <a class="action-btn" href="#"><i class="fas fa-share action-icon"></i><span class="action-text">${item.shares}</span></a>
+          <div class="disc-area"><div class="disc-bg"><img src="${item.user.avatar}" alt="Music"></div><div class="music-note" style="animation-delay: 0s"><i class="fas fa-music"></i></div><div class="music-note" style="animation-delay: 1s"><i class="fas fa-music"></i></div></div>
+        </div>
+        <div class="bottom-info">
+          <div class="username"><a href="${item.profileLink || 'profile.html'}">@${escapeHtml(item.user.username)}</a></div>
+          <div class="description">${escapeHtml(item.description)} <span class="hashtags">${escapeHtml(hashtags)}</span></div>
+          <div class="music-ticker"><i class="fas fa-music"></i><div class="ticker-text">${escapeHtml(item.music)}</div></div>
+        </div>
+      </div>`;
+  }).join('');
+  slides = document.querySelectorAll('.video-slide');
+}
+
+function initSplash(){ setTimeout(() => splashScreen.classList.add('hide'), 1200); }
+function playVideo(index){
+  slides.forEach((slide, i) => {
+    slide.classList.remove('active', 'prev');
+    const vid = slide.querySelector('video');
+    if (i === index) { slide.classList.add('active'); if(vid){ vid.currentTime = 0; vid.muted = false; vid.play().catch(() => { vid.muted = true; vid.play().catch(()=>{}); }); slide.querySelector('.play-overlay').style.display = 'none'; } }
+    else if (i < index) { slide.classList.add('prev'); if(vid){ vid.pause(); vid.currentTime = 0; } }
+    else { if(vid){ vid.pause(); vid.currentTime = 0; } }
+  });
+  currentSlide = index;
+}
+function togglePlay(e){
+  if (e.target.closest('.sidebar-right') || e.target.closest('.comments-drawer') || e.target.closest('.bottom-nav') || e.target.closest('.top-nav') || e.target.closest('a') || e.target.closest('button')) return;
+  const video = slides[currentSlide]?.querySelector('video');
+  const playIcon = slides[currentSlide]?.querySelector('.play-overlay');
+  if(!video) return;
+  if (video.paused) { video.play().catch(()=>{}); if(playIcon) playIcon.style.display = 'none'; }
+  else { if (video.muted) { video.muted = false; video.currentTime = 0; video.play().catch(()=>{}); } else { video.pause(); if(playIcon) playIcon.style.display = 'block'; } }
+}
+function handleScroll(e){ if (commentsDrawer.classList.contains('open') || isScrolling) return; isScrolling = true; if (e.deltaY > 0) nextSlide(); else prevSlide(); setTimeout(() => { isScrolling = false; }, 800); }
+function nextSlide(){ if (!slides.length) return; if (currentSlide < slides.length - 1) playVideo(currentSlide + 1); else playVideo(0); }
+function prevSlide(){ if (!slides.length) return; if (currentSlide > 0) playVideo(currentSlide - 1); }
+
+async function toggleHeart(index, btn){
+  const session = getSession();
+  if(!session){ alert('Please log in from Profile or Upload to like videos.'); return; }
+  const videoItem = appData.videos[index];
+  let likes = await DB.select('likes');
+  const users = await DB.select('users');
+  const activeUser = resolveUser(users, session) || session;
+  const existing = likes.find(l => String(l.video_id) === String(videoItem.id) && (String(l.user_id) === String(activeUser.id) || normalizeEmail(l.user_email) === normalizeEmail(activeUser.email)));
+  if(existing){
+    likes = likes.filter(l => String(l.id) !== String(existing.id));
+    await WebDB._setRaw('likes', { columns:['id','video_id','user_id','updated_at'], rows: likes.map(l => ({ id:l.id || generateId('like'), video_id:l.video_id, user_id:l.user_id, updated_at:l.updated_at })) });
+    videoItem.liked = false;
+  } else {
+    await DB.insert('likes', { id:generateId('like'), video_id: videoItem.id, user_id: activeUser.id, updated_at: new Date().toISOString() });
+    videoItem.liked = true;
+  }
+  await loadFeedData();
+  renderSlides();
+  playVideo(index);
+  const icon = btn.querySelector('i');
+  if (icon) { icon.style.transform = 'scale(1.2)'; setTimeout(() => { icon.style.transform = 'scale(1)'; }, 200); }
+}
+function openComments(index = currentSlide){ currentSlide = index; populateComments(index); commentsDrawer.classList.add('open'); commentInput.focus(); }
+function closeComments(){ commentsDrawer.classList.remove('open'); commentInput.value = ''; }
+function populateComments(index){
+  const videoItem = appData.videos[index];
+  drawerTitle.textContent = formatCommentCount(videoItem.comments.length);
+  if (!videoItem.comments.length) { commentsList.innerHTML = '<div class="empty-comments">No comments yet</div>'; updateCommentCounter(index); return; }
+  commentsList.innerHTML = videoItem.comments.map(c => `
+    <div class="comment-item">
+      <div class="comment-avatar"><img src="${c.avatar}" alt="${escapeHtml(c.user)}"></div>
+      <div class="comment-content">
+        <div class="comment-user">${escapeHtml(c.user)}</div>
+        <div class="comment-text">${escapeHtml(c.text)}</div>
+        <div class="comment-meta"><span>${escapeHtml(c.time || 'now')}</span><span>Reply</span></div>
+      </div>
+      <div class="comment-like-container"><i class="far fa-heart comment-like-icon"></i><span class="comment-like-count">${c.likes ?? 0}</span></div>
+    </div>`).join('');
+  updateCommentCounter(index);
+}
+function updateCommentCounter(index){
+  const buttons = document.querySelectorAll('[data-action="comment"]');
+  const btn = Array.from(buttons).find(item => Number(item.dataset.index) === index);
+  if (btn) btn.querySelector('.action-text').textContent = appData.videos[index].comments.length.toLocaleString();
+}
+async function addComment(){
+  const session = getSession();
+  if(!session){ alert('Please log in from Profile or Upload to comment.'); return; }
+  const text = commentInput.value.trim();
+  if (!text) return;
+  const users = await DB.select('users');
+  const activeUser = resolveUser(users, session) || session;
+  await DB.insert('comments', { id:generateId('comment'), video_id: appData.videos[currentSlide].id, user_id: activeUser.id, comment_text: text, updated_at: new Date().toISOString() });
+  commentInput.value = '';
+  await loadFeedData();
+  populateComments(currentSlide);
+  renderSlides();
+  playVideo(currentSlide);
+}
+async function handleActionClick(e){
+  const likeBtn = e.target.closest('[data-action="like"]');
+  const commentBtn = e.target.closest('[data-action="comment"]');
+  if (likeBtn) { const index = Number(likeBtn.dataset.index); await toggleHeart(index, likeBtn); }
+  if (commentBtn) { const index = Number(commentBtn.dataset.index); openComments(index); }
+}
+function initEvents(){
+  document.querySelector('.video-wrapper').addEventListener('click', togglePlay);
+  document.addEventListener('wheel', handleScroll, { passive: true });
+  document.addEventListener('touchstart', e => { startY = e.touches[0].clientY; }, { passive: true });
+  document.addEventListener('touchend', e => { if (commentsDrawer.classList.contains('open')) return; const endY = e.changedTouches[0].clientY; const diff = startY - endY; if (Math.abs(diff) > 50) { if (diff > 0) nextSlide(); else prevSlide(); } }, { passive: true });
+  slidesContainer.addEventListener('click', handleActionClick);
+  closeCommentsBtn.addEventListener('click', closeComments);
+  postCommentBtn.addEventListener('click', addComment);
+  commentInput.addEventListener('keydown', e => { if (e.key === 'Enter') addComment(); });
+}
+async function init(){ await syncCurrentUser(); await loadFeedData(); renderSlides(); initSplash(); initEvents(); if (slides.length) playVideo(0); }
+init();
+</script>
+</body>
+</html>

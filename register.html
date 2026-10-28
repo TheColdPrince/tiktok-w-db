@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Register</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(254,44,85,0.18), transparent 26%),
+        radial-gradient(circle at bottom right, rgba(32,213,236,0.12), transparent 30%),
+        linear-gradient(180deg, #090909 0%, #000 100%);
+      color: #fff;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    .bg-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(75px);
+      opacity: 0.55;
+      pointer-events: none;
+      animation: floatGlow 9s ease-in-out infinite alternate;
+    }
+
+    .bg-glow.one {
+      width: 220px;
+      height: 220px;
+      background: rgba(254,44,85,0.22);
+      top: -30px;
+      right: -40px;
+    }
+
+    .bg-glow.two {
+      width: 260px;
+      height: 260px;
+      background: rgba(32,213,236,0.14);
+      bottom: -80px;
+      left: -70px;
+      animation-duration: 11s;
+    }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .back-btn {
+      position: fixed;
+      top: 18px;
+      left: 16px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(20,20,20,0.72);
+      backdrop-filter: blur(10px);
+      color: #fe2c55;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.28);
+      animation: slideFadeDown .65s ease both;
+    }
+
+    .back-btn i {
+      font-size: 18px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 440px;
+      background: rgba(16,16,16,0.88);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 28px;
+      padding: 26px 22px 22px;
+      backdrop-filter: blur(14px);
+      box-shadow:
+        0 25px 60px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      transform: translateY(24px) scale(.98);
+      opacity: 0;
+      animation: cardEnter .85s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+
+    .logo-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+      animation: fadeUp .8s ease .1s both;
+    }
+
+    .logo-badge {
+      width: 78px;
+      height: 78px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(254,44,85,0.16), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 40px rgba(254,44,85,0.15);
+    }
+
+    .logo-badge i {
+      font-size: 34px;
+      color: #fe2c55;
+      text-shadow: 0 0 20px rgba(254,44,85,0.35);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+      margin-bottom: 8px;
+      animation: fadeUp .8s ease .18s both;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #b5b5b5;
+      font-size: 14px;
+      line-height: 1.45;
+      margin-bottom: 22px;
+      animation: fadeUp .8s ease .26s both;
+    }
+
+    .field {
+      margin-bottom: 14px;
+      animation: fadeUp .8s ease both;
+    }
+
+    .field:nth-of-type(1) { animation-delay: .32s; }
+    .field:nth-of-type(2) { animation-delay: .40s; }
+    .field:nth-of-type(3) { animation-delay: .48s; }
+    .field:nth-of-type(4) { animation-delay: .56s; }
+
+    .label {
+      display: block;
+      font-size: 12px;
+      color: #d2d2d2;
+      margin-bottom: 8px;
+      font-weight: 600;
+      padding-left: 2px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8f8f8f;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      height: 52px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      outline: none;
+      padding: 0 14px 0 42px;
+      font-size: 15px;
+      transition: 0.25s ease;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #bfbfbf;
+      outline: none;
+      padding: 14px;
+      font-size: 14px;
+      transition: 0.25s ease;
+    }
+
+    input::placeholder {
+      color: #7a7a7a;
+    }
+
+    input:focus {
+      border-color: rgba(254,44,85,0.7);
+      box-shadow: 0 0 0 4px rgba(254,44,85,0.12);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .preview-wrap {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0 4px;
+      animation: fadeUp .8s ease .64s both;
+    }
+
+    .preview-ring {
+      width: 94px;
+      height: 94px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(135deg, #fe2c55, rgba(32,213,236,0.7));
+      box-shadow: 0 12px 30px rgba(254,44,85,0.18);
+    }
+
+    .preview {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #141414;
+      display: block;
+      border: 2px solid #0d0d0d;
+    }
+
+    .register-btn {
+      width: 100%;
+      height: 54px;
+      border: none;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #fe2c55, #ff4f79);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 16px 30px rgba(254,44,85,0.28);
+      transition: transform .18s ease, box-shadow .18s ease, opacity .18s ease;
+      animation: fadeUp .8s ease .72s both;
+    }
+
+    .register-btn:active {
+      transform: scale(.985);
+    }
+
+    .register-btn:hover {
+      box-shadow: 0 18px 36px rgba(254,44,85,0.34);
+    }
+
+    .bottom-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 12px;
+      animation: fadeUp .8s ease .8s both;
+    }
+
+    .ghost-btn {
+      flex: 1;
+      height: 50px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      transition: 0.25s ease;
+    }
+
+    .ghost-btn:hover {
+      background: rgba(255,255,255,0.07);
+    }
+
+    .msg {
+      min-height: 24px;
+      margin-top: 14px;
+      text-align: center;
+      font-size: 14px;
+      animation: fadeUp .8s ease .88s both;
+    }
+
+    .ok { color: #7dffb1; }
+    .err { color: #ff9aa9; }
+
+    @keyframes cardEnter {
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideFadeDown {
+      from {
+        opacity: 0;
+        transform: translateY(-12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes floatGlow {
+      from { transform: translateY(0) translateX(0) scale(1); }
+      to { transform: translateY(12px) translateX(-10px) scale(1.06); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow one"></div>
+  <div class="bg-glow two"></div>
+
+  <a href="index.html" class="back-btn" aria-label="Back to home">
+    <i class="fas fa-chevron-left"></i>
+  </a>
+
+  <div class="page">
+    <div class="card">
+      <div class="logo-wrap">
+        <div class="logo-badge">
+          <i class="fas fa-user-plus"></i>
+        </div>
+      </div>
+
+      <h1>Create Account</h1>
+      <div class="subtitle">
+        Join the app and start uploading your own videos.
+      </div>
+
+      <div class="field">
+        <label class="label">Username</label>
+        <div class="input-wrap">
+          <i class="fas fa-user"></i>
+          <input id="username" type="text" placeholder="Choose a username">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Email</label>
+        <div class="input-wrap">
+          <i class="fas fa-envelope"></i>
+          <input id="email" type="email" placeholder="you@example.com">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock"></i>
+          <input id="password" type="password" placeholder="Create a password">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="label">Avatar (optional)</label>
+        <input id="avatar" type="file" accept="image/*">
+      </div>
+
+      <div class="preview-wrap">
+        <div class="preview-ring">
+          <img id="preview" class="preview" alt="avatar preview">
+        </div>
+      </div>
+
+      <button id="registerBtn" class="register-btn">Create account</button>
+
+      <div class="bottom-row">
+        <a class="ghost-btn" href="login.html">Login</a>
+        <a class="ghost-btn" href="index.html">Home</a>
+      </div>
+
+      <div id="msg" class="msg"></div>
+    </div>
+  </div>
+
+  <script>
+    const SESSION_KEY='tt_current_user';
+    const DEFAULT_AVATAR='https://randomuser.me/api/portraits/men/11.jpg';
+
+    function generateId(prefix='id'){
+      return prefix + '_' + Date.now() + '_' + Math.random().toString(36).slice(2,10);
+    }
+
+    function normalizeEmail(v){
+      return String(v || '').trim().toLowerCase();
+    }
+
+    document.getElementById('preview').src = DEFAULT_AVATAR;
+
+    document.getElementById('avatar').addEventListener('change', e => {
+      const file = e.target.files[0];
+      if(file){
+        document.getElementById('preview').src = URL.createObjectURL(file);
+      } else {
+        document.getElementById('preview').src = DEFAULT_AVATAR;
+      }
+    });
+
+    async function register(){
+      const username = document.getElementById('username').value.trim();
+      const email = normalizeEmail(document.getElementById('email').value);
+      const password = document.getElementById('password').value;
+      const avatarInput = document.getElementById('avatar');
+      const msg = document.getElementById('msg');
+      const btn = document.getElementById('registerBtn');
+
+      msg.className = 'msg';
+      msg.textContent = '';
+
+      if(!username || !email || !password){
+        msg.classList.add('err');
+        msg.textContent = 'Please fill all required fields.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+
+      try {
+        const users = await WebDB.select('users') || [];
+
+        if(users.some(u => normalizeEmail(u.email) === email)){
+          msg.classList.add('err');
+          msg.textContent = 'Email already exists.';
+          btn.disabled = false;
+          btn.textContent = 'Create account';
+          return;
+        }
+
+        let avatarPath = DEFAULT_AVATAR;
+
+        if(avatarInput.files.length){
+          const uploaded = await WebDB.uploadFile(avatarInput);
+          if(uploaded) avatarPath = uploaded;
+        }
+
+        const newUser = {
+          id: generateId('user'),
+          username,
+          email,
+          password,
+          avatar_path: avatarPath,
+          updated_at: new Date().toISOString()
+        };
+
+        await WebDB.insert('users', newUser);
+
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          id: newUser.id,
+          username: newUser.username,
+          email: newUser.email,
+          avatar_path: newUser.avatar_path
+        }));
+
+        const sessions = await WebDB.select('sessions') || [];
+        sessions.push({
+          id: generateId('session'),
+          user_id: newUser.id,
+          session_token: 'local-' + Date.now(),
+          is_active: 1,
+          updated_at: new Date().toISOString()
+        });
+
+        await WebDB._setRaw('sessions', {
+          columns:['id','user_id','session_token','is_active','updated_at'],
+          rows:sessions
+        });
+
+        msg.classList.add('ok');
+        msg.textContent = 'Registered successfully. Redirecting...';
+
+        setTimeout(() => {
+          location.href = 'profile.html';
+        }, 700);
+      } catch (err) {
+        console.error(err);
+        msg.classList.add('err');
+        msg.textContent = 'Something went wrong. Please try again.';
+        btn.disabled = false;
+        btn.textContent = 'Create account';
+      }
+    }
+
+    document.getElementById('registerBtn').addEventListener('click', register);
+
+    document.getElementById('password').addEventListener('keydown', function(e){
+      if(e.key === 'Enter') register();
+    });
+
+    document.getElementById('email').addEventListener('keydown', function(e){
+      if(e.key === 'Enter') register();
+    });
+
+    document.getElementById('username').addEventListener('keydown', function(e){
+      if(e.key === 'Enter') register();
+    });
+  </script>
+</body>
+</html>
